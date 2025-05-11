@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>microbit.meusite</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    body {
+      background-color: #0d0d0d;
+      color: #e0f7fa;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    .hero {
+      height: 100vh;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      color: #00ffcc;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+
+    h1, h2, h4 {
+      font-weight: bold;
+    }
+
+    .btn-primary {
+      background-color: #00ffcc;
+      border: none;
+      color: #000;
+    }
+
+    .btn-primary:hover {
+      background-color: #00cc99;
+    }
+
+    footer {
+      background-color: #111;
+    }
+
+    .grid-velha {
+      display: grid;
+      grid-template-columns: repeat(3, 80px);
+      gap: 5px;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    .casa {
+      width: 80px;
+      height: 80px;
+      background-color: #222;
+      color: #00ffcc;
+      font-size: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border-radius: 5px;
+      transition: background-color 0.3s;
+    }
+
+    .casa:hover {
+      background-color: #333;
+    }
+
+    .vencedora {
+      background-color: #007f66 !important;
+    }
+
+    .memory-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 70px);
+      gap: 10px;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    .memory-card {
+      width: 70px;
+      height: 70px;
+      background-color: #222;
+      color: transparent;
+      font-size: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border-radius: 5px;
+      transition: background 0.3s;
+    }
+
+    .memory-card.revealed {
+      background-color: #00ffcc;
+      color: #000;
+    }
+
+    #pontuacaoMemoria {
+      margin-top: 10px;
+      font-size: 1.2rem;
+      color: #00ffcc;
+    }
+
+    @media (max-width: 576px) {
+      .grid-velha {
+        grid-template-columns: repeat(3, 60px);
+      }
+
+      .casa {
+        width: 60px;
+        height: 60px;
+        font-size: 1.5rem;
+      }
+
+      .memory-grid {
+        grid-template-columns: repeat(4, 60px);
+      }
+
+      .memory-card {
+        width: 60px;
+        height: 60px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <section class="hero">
+    <h1>🧠 microbit.meusite</h1>
+    <p>Explore o mundo da tecnologia com diversão!</p>
+    <a href="#jogos" class="btn btn-primary mt-3">Ver Joguinhos</a>
+  </section>
+
+  <section class="container py-5 text-center">
+    <h2>O que é o Micro:bit?</h2>
+    <p>Micro:bit é um pequeno computador programável projetado para ensinar tecnologia e programação de forma interativa e divertida.</p>
+  </section>
+
+  <section id="jogos" class="container py-5 text-center">
+    <h2>🎮 Joguinhos Interativos</h2>
+
+    <!-- Jogo da Velha -->
+    <div class="my-5">
+      <h4>❌ Jogo da Velha ⭕</h4>
+      <select id="modoJogo" class="form-select w-auto mx-auto mb-2">
+        <option value="2">2 Jogadores</option>
+        <option value="1">Contra o Computador</option>
+      </select>
+      <div id="gridVelha" class="grid-velha"></div>
+      <p id="resultadoVelha" class="mt-3"></p>
+      <button class="btn btn-secondary mt-2" onclick="resetarVelha()">Reiniciar</button>
+    </div>
+
+    <!-- Jogo da Memória -->
+    <div class="my-5">
+      <h4>🧠 Jogo da Memória</h4>
+      <p>Encontre os pares de símbolos!</p>
+      <div id="memory-grid" class="memory-grid"></div>
+      <p id="pontuacaoMemoria">Tentativas: 0 | Tempo: 0s | Recorde: --</p>
+      <button class="btn btn-outline-light mt-2" onclick="criarJogoMemoria()">Reiniciar Jogo</button>
+    </div>
+  </section>
+
+  <footer class="text-center py-4 text-muted">
+    © 2025 microbit.meusite - Todos os direitos reservados.
+  </footer>
+
+  <!-- Scripts -->
+  <script>
+    // Jogo da Velha
+    const gridVelha = document.getElementById("gridVelha");
+    const resultadoVelha = document.getElementById("resultadoVelha");
+    const modoJogo = document.getElementById("modoJogo");
+    let jogadorAtual = "X";
+    let tabuleiro = Array(9).fill("");
+    let fimDeJogo = false;
+
+    function criarJogoVelha() {
+      gridVelha.innerHTML = "";
+      tabuleiro.forEach((valor, i) => {
+        const casa = document.createElement("div");
+        casa.classList.add("casa");
+        casa.innerText = valor;
+        casa.addEventListener("click", () => jogar(i));
+        gridVelha.appendChild(casa);
+      });
+    }
+
+    function jogar(i) {
+      if (tabuleiro[i] !== "" || fimDeJogo) return;
+      tabuleiro[i] = jogadorAtual;
+      criarJogoVelha();
+      verificarVencedor();
+      jogadorAtual = jogadorAtual === "X" ? "O" : "X";
+      if (modoJogo.value === "1" && jogadorAtual === "O" && !fimDeJogo) {
+        setTimeout(jogadaComputador, 300);
+      }
+    }
+
+    function jogadaComputador() {
+      let livres = tabuleiro.map((v, i) => v === "" ? i : null).filter(v => v !== null);
+      let escolha = livres[Math.floor(Math.random() * livres.length)];
+      tabuleiro[escolha] = "O";
+      criarJogoVelha();
+      verificarVencedor();
+      jogadorAtual = "X";
+    }
+
+    function verificarVencedor() {
+      const combinacoes = [
+        [0,1,2],[3,4,5],[6,7,8],
+        [0,3,6],[1,4,7],[2,5,8],
+        [0,4,8],[2,4,6]
+      ];
+      for (let combo of combinacoes) {
+        const [a,b,c] = combo;
+        if (tabuleiro[a] && tabuleiro[a] === tabuleiro[b] && tabuleiro[a] === tabuleiro[c]) {
+          document.querySelectorAll(".casa")[a].classList.add("vencedora");
+          document.querySelectorAll(".casa")[b].classList.add("vencedora");
+          document.querySelectorAll(".casa")[c].classList.add("vencedora");
+          resultadoVelha.textContent = `🏆 Jogador ${tabuleiro[a]} venceu!`;
+          fimDeJogo = true;
+          return;
+        }
+      }
+      if (!tabuleiro.includes("")) {
+        resultadoVelha.textContent = "Empate!";
+        fimDeJogo = true;
+      }
+    }
+
+    function resetarVelha() {
+      tabuleiro = Array(9).fill("");
+      jogadorAtual = "X";
+      fimDeJogo = false;
+      resultadoVelha.textContent = "";
+      criarJogoVelha();
+    }
+
+    criarJogoVelha();
+  </script>
+  <script>
+    // Jogo da Memória
+    const memoryGrid = document.getElementById("memory-grid");
+    const pontuacaoMemoria = document.getElementById("pontuacaoMemoria");
+    const simbolos = ["🍎", "🍌", "🍇", "🍉", "🍓", "🍍", "🥝", "🍒"];
+    let cartas = [];
+    let selecionadas = [];
+    let paresEncontrados = 0;
+    let tentativas = 0;
+    let tempo = 0;
+    let intervaloTempo;
+
+    function embaralhar(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+    }
+
+    function atualizarPontuacao() {
+      const recorde = localStorage.getItem("recordeMemoria") || "--";
+      pontuacaoMemoria.textContent = `Tentativas: ${tentativas} | Tempo: ${tempo}s | Recorde: ${recorde}s`;
+    }
+
+    function iniciarCronometro() {
+      tempo = 0;
+      clearInterval(intervaloTempo);
+      intervaloTempo = setInterval(() => {
+        tempo++;
+        atualizarPontuacao();
+      }, 1000);
+    }
+
+    function criarJogoMemoria() {
+      memoryGrid.innerHTML = "";
+      cartas = [...simbolos, ...simbolos];
+      embaralhar(cartas);
+      paresEncontrados = 0;
+      tentativas = 0;
+      selecionadas = [];
+      iniciarCronometro();
+      atualizarPontuacao();
+      cartas.forEach(simbolo => {
+        const card = document.createElement("div");
+        card.classList.add("memory-card");
+        card.dataset.simbolo = simbolo;
+        card.innerText = "";
+        card.addEventListener("click", () => virarCarta(card));
+        memoryGrid.appendChild(card);
+      });
+    }
+
+    function virarCarta(card) {
+      if (card.classList.contains("revealed") || selecionadas.length >= 2) return;
+      card.classList.add("revealed");
+      card.innerText = card.dataset.simbolo;
+      selecionadas.push(card);
+
+      if (selecionadas.length === 2) {
+        tentativas++;
+        atualizarPontuacao();
+        setTimeout(() => {
+          if (selecionadas[0].dataset.simbolo !== selecionadas[1].dataset.simbolo) {
+            selecionadas[0].classList.remove("revealed");
+            selecionadas[0].innerText = "";
+            selecionadas[1].classList.remove("revealed");
+            selecionadas[1].innerText = "";
+          } else {
+            paresEncontrados++;
+            if (paresEncontrados === simbolos.length) {
+              clearInterval(intervaloTempo);
+              const recordeAnterior = localStorage.getItem("recordeMemoria");
+              if (!recordeAnterior || tempo < parseInt(recordeAnterior)) {
+                localStorage.setItem("recordeMemoria", tempo);
+              }
+              setTimeout(() => {
+                alert(`Parabéns! Você encontrou todos os pares em ${tentativas} tentativas e ${tempo} segundos!`);
+              }, 300);
+            }
+          }
+          selecionadas = [];
+        }, 800);
+      }
+    }
+
+    criarJogoMemoria();
+  </script>
+</body>
+</html>
